@@ -36,11 +36,34 @@ logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
 @dataclass
 class AnimationPipelineOutput(BaseOutput):
+    """
+    Output class for Stable Diffusion pipelines.
+
+    Args:
+        images (`List[PIL.Image.Image]` or `np.ndarray`)
+            List of denoised PIL images of length `batch_size` or numpy array of shape `(batch_size, height, width,
+            num_channels)`. PIL images or numpy array present the denoised images of the diffusion pipeline.
+    """
+
     videos: Union[torch.Tensor, np.ndarray]
 
 
 class AnimationPipeline(DiffusionPipeline):
     _optional_components = []
+
+    vae: AutoencoderKL
+    text_encoder: CLIPTextModel
+    tokenizer: CLIPTokenizer
+    unet: UNet3DConditionModel
+    scheduler: Union[
+        DDIMScheduler,
+        PNDMScheduler,
+        LMSDiscreteScheduler,
+        EulerDiscreteScheduler,
+        EulerAncestralDiscreteScheduler,
+        DPMSolverMultistepScheduler,
+    ]
+    controlnet: Optional[SparseControlNetModel]
 
     def __init__(
         self,
@@ -56,7 +79,7 @@ class AnimationPipeline(DiffusionPipeline):
             EulerAncestralDiscreteScheduler,
             DPMSolverMultistepScheduler,
         ],
-        controlnet: Union[SparseControlNetModel, None] = None,
+        controlnet: Optional[SparseControlNetModel] = None,
     ):
         super().__init__()
 
@@ -335,7 +358,7 @@ class AnimationPipeline(DiffusionPipeline):
         callback_steps: Optional[int] = 1,
 
         # support controlnet
-        controlnet_images: torch.FloatTensor = None,
+        controlnet_images: Optional[torch.FloatTensor] = None,
         controlnet_image_index: list = [0],
         controlnet_conditioning_scale: Union[float, List[float]] = 1.0,
 
@@ -386,7 +409,7 @@ class AnimationPipeline(DiffusionPipeline):
             device,
             generator,
             latents,
-        )
+        ) # type: ignore
         latents_dtype = latents.dtype
 
         # Prepare extra step kwargs.

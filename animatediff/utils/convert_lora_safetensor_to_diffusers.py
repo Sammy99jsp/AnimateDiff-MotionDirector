@@ -146,7 +146,7 @@ if __name__ == "__main__":
     lora_prefix_text_encoder = args.lora_prefix_text_encoder
     alpha = args.alpha
 
-    pipe = convert(base_model_path, checkpoint_path, lora_prefix_unet, lora_prefix_text_encoder, alpha)
+    pipe = convert_lora(base_model_path, checkpoint_path, lora_prefix_unet, lora_prefix_text_encoder, alpha)
 
     pipe = pipe.to(args.device)
     pipe.save_pretrained(args.dump_path, safe_serialization=args.to_safetensors)
